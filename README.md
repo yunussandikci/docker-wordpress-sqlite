@@ -1,5 +1,11 @@
 # WordPress Docker Images with SQLite Support
----
+> Always up-to-date WordPress Docker images with built-in SQLite support<br>
+
+[![License: GPL v2](https://img.shields.io/badge/License-GPL_v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
+[![Multi-Architecture Support](https://img.shields.io/badge/arch-linux%2Famd64-green)](https://github.com/yunussandikci/docker-wordpress-sqlite/pkgs/container/wordpress-sqlite)
+[![Multi-Architecture Support](https://img.shields.io/badge/arch-linux%2Farm64%2Fv7-green)](https://github.com/yunussandikci/docker-wordpress-sqlite/pkgs/container/wordpress-sqlite)
+[![Multi-Architecture Support](https://img.shields.io/badge/arch-linux%2Famd64%2Fv8-green)](https://github.com/yunussandikci/docker-wordpress-sqlite/pkgs/container/wordpress-sqlite)
+
 This repository provides always up-to-date WordPress Docker images with SQLite support, making it the best choice for quick development, testing, and small-scale deployments. [Check all available docker images!](https://github.com/yunussandikci/docker-wordpress-sqlite/pkgs/container/wordpress-sqlite/versions)
 
 <img src="https://github.com/user-attachments/assets/79f287b9-ef4d-4b12-b9a6-fbb5152d5517"  width="600"/>
