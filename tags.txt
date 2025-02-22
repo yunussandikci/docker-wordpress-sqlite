@@ -1,0 +1,9 @@
+6.7.2-php8.3-fpm-alpine
+6.7.2-php8.2-fpm-alpine
+6.7.2-php8.1-fpm-alpine
+6.7.2-php8.3-fpm
+6.7.2-php8.3-apache
+6.7.2-php8.2-fpm
+6.7.2-php8.2-apache
+6.7.2-php8.1-fpm
+6.7.2-php8.1-apache
