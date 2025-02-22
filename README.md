@@ -1,6 +1,8 @@
-# WordPres Images with SQLite Support
+# WordPress Docker Images with SQLite Support
 ---
-This repository provides always up-to-date WordPress Docker images with SQLite support, making it the best choice for development, testing, and small-scale deployments. Say goodbye to the hassle of setting up MySQL or MariaDB—SQLite is all you need!
+This repository provides always up-to-date WordPress Docker images with SQLite support, making it the best choice for quick development, testing, and small-scale deployments. [Check all available docker images!](https://github.com/yunussandikci/docker-wordpress-sqlite/pkgs/container/wordpress-sqlite/versions)
+
+<img src="https://github.com/user-attachments/assets/79f287b9-ef4d-4b12-b9a6-fbb5152d5517"  width="600"/>
 
 ## ✨ Features 
 
@@ -11,13 +13,10 @@ This repository provides always up-to-date WordPress Docker images with SQLite s
 - **Minimalistic**: Only WordPress and the SQLite plugin are included—nothing extra. Lightweight and efficient!
 
 ## 🚀 Usage
-
-### 😍 One command
-
 To run the container, use the following command:
 
 ```bash
-docker run -d -p 8080:80 --name wordpress-sqlite ghcr.io/yunussandikci/wordpress-sqlite:<TAG>
+docker run -d -p 8080:80 ghcr.io/yunussandikci/wordpress-sqlite:6.7.2-php8.3-apache
 ```
 
 This will start a WordPress instance with SQLite as the database, accessible at `http://localhost:8080`.
@@ -49,4 +48,4 @@ If you encounter any issues or have questions, please open an issue in the [GitH
 
 ## 📄 License 
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the GPL-2.0 License. See the [LICENSE](LICENSE) file for details.
