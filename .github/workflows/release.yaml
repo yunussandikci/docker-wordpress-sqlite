@@ -1,0 +1,71 @@
+name: Automated Release
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  cron:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fetch WordPress Tags
+        id: fetch-tags
+        run: |
+          CURRENT_TIMESTAMP=$(date +%s)
+          TEN_DAYS_AGO=$((CURRENT_TIMESTAMP - 864000))
+          TAGS=$(curl -s "https://registry.hub.docker.com/v2/repositories/library/wordpress/tags/?page_size=100" | \
+            jq -r --argjson ten_days_ago "$TEN_DAYS_AGO" \
+            '.results[] | select(.name | test("^[0-9]+\\.[0-9]+\\.[0-9]+-php[0-9]+\\.[0-9]+-(apache|fpm)(-.+)?$")) | select((.last_updated | sub("\\..*"; "") | strptime("%Y-%m-%dT%H:%M:%S") | mktime) >= $ten_days_ago) | .name' | tr '\n' ' ')
+          echo "Tags fetched: ${TAGS}"
+          echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+
+      - name: Compare Tags
+        id: compare-tags
+        run: |
+          touch tags.txt
+          NEW_TAGS=$(echo "${{ steps.fetch-tags.outputs.tags }}" | tr ' ' '\n' | grep -Fxvf tags.txt | tr '\n' ' ' | sed 's/ *$//')
+          echo "New tags: ${NEW_TAGS}"
+          echo "new_tags=${NEW_TAGS}" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push for each new tag
+        if: ${{ steps.compare-tags.outputs.new_tags != '' }}
+        run: |
+          echo "${{ steps.compare-tags.outputs.new_tags }}" | tr ' ' '\n' | while read -r TAG; do
+            if [ -n "$TAG" ]; then
+              echo "Building and pushing tag: $TAG"
+              docker buildx build \
+                --platform linux/amd64,linux/arm/v7,linux/arm64/v8 \
+                --push \
+                --build-arg TAG="$TAG" \
+                --provenance=false \
+                -t "ghcr.io/${{ github.repository_owner }}/wordpress-sqlite:$TAG" .
+            fi
+          done
+
+      - name: Push changes
+        if: ${{ steps.compare-tags.outputs.new_tags != '' }}
+        run: |
+          echo "${{ steps.compare-tags.outputs.new_tags }}" | tr ' ' '\n' >> tags.txt
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add tags.txt
+          git commit -m "Automated update."
+          git push
