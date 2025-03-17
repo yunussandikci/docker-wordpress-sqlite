@@ -26,8 +26,13 @@ jobs:
       - name: Fetch WordPress Tags
         id: fetch-tags
         run: |
-          TAGS=$(curl -s "https://registry.hub.docker.com/v2/repositories/library/wordpress/tags/?page_size=100" | \
-            jq -r '.results[] | select(.name | test("^[0-9]+\\.[0-9]+\\.[0-9]+-php[0-9]+\\.[0-9]+-(apache|fpm)(-.+)?$")) | .name' | tr '\n' ' ')
+          TAGS=""
+          for page in {1..2}; do
+            page_tags=$(curl -s "https://registry.hub.docker.com/v2/repositories/library/wordpress/tags/?page_size=100&page=${page}" | \
+              jq -r '.results[] | select(.name | test("^[0-9]+\\.[0-9]+\\.[0-9]+-php[0-9]+\\.[0-9]+-(apache|fpm)(-.+)?$")) | .name' | tr '\n' ' ')
+            TAGS="${TAGS} ${page_tags}"
+            echo "Fetched tags from page ${page}"
+          done
           echo "Tags fetched: ${TAGS}"
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT
 
