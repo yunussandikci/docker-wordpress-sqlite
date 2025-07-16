@@ -1,10 +1,15 @@
 # WordPress Docker Images with SQLite Support
-> Always up-to-date WordPress Docker images with built-in SQLite support<br>
+> Always up-to-date WordPress Docker images with built-in SQLite support simply. <br>
+
+```
+TL;DR 
+docker run -d -p 8080:80 ghcr.io/yunussandikci/wordpress-sqlite:6.8.2-php8.4-apache 
+```
 
 [![License: GPL v2](https://img.shields.io/badge/License-GPL_v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
 [![Multi-Architecture Support](https://img.shields.io/badge/arch-linux%2Famd64-green)](https://github.com/yunussandikci/docker-wordpress-sqlite/pkgs/container/wordpress-sqlite)
-[![Multi-Architecture Support](https://img.shields.io/badge/arch-linux%2Farm64%2Fv7-green)](https://github.com/yunussandikci/docker-wordpress-sqlite/pkgs/container/wordpress-sqlite)
-[![Multi-Architecture Support](https://img.shields.io/badge/arch-linux%2Famd64%2Fv8-green)](https://github.com/yunussandikci/docker-wordpress-sqlite/pkgs/container/wordpress-sqlite)
+[![Multi-Architecture Support](https://img.shields.io/badge/arch-linux%2Farm%2Fv7-green)](https://github.com/yunussandikci/docker-wordpress-sqlite/pkgs/container/wordpress-sqlite)
+[![Multi-Architecture Support](https://img.shields.io/badge/arch-linux%2Farm%2Fv8-green)](https://github.com/yunussandikci/docker-wordpress-sqlite/pkgs/container/wordpress-sqlite)
 
 This repository provides always up-to-date WordPress Docker images with SQLite support, making it the best choice for quick development, testing, and small-scale deployments. [Check all available docker images!](https://github.com/yunussandikci/docker-wordpress-sqlite/pkgs/container/wordpress-sqlite/versions)
 
@@ -22,7 +27,7 @@ This repository provides always up-to-date WordPress Docker images with SQLite s
 To run the container, use the following command:
 
 ```bash
-docker run -d -p 8080:80 ghcr.io/yunussandikci/wordpress-sqlite:6.7.2-php8.3-apache
+docker run -d -p 8080:80 ghcr.io/yunussandikci/wordpress-sqlite:6.8.2-php8.4-apache
 ```
 
 This will start a WordPress instance with SQLite as the database, accessible at `http://localhost:8080`.
