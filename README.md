@@ -8,7 +8,7 @@
 
 TL;DR 
 ```
-docker run -d -p 8080:80 ghcr.io/yunussandikci/wordpress-sqlite:6.8.2-php8.4-apache
+docker run -d -p 8080:80 ghcr.io/yunussandikci/wordpress-sqlite:6.9.0-php8.5-apache
 ```
 
 This repository provides always up-to-date WordPress Docker images with SQLite support, making it the best choice for quick development, testing, and small-scale deployments. [Check all available docker images!](https://github.com/yunussandikci/docker-wordpress-sqlite/pkgs/container/wordpress-sqlite/versions)
