@@ -1,5 +1,5 @@
 # WordPress Docker Images with SQLite Support
-> Always up-to-date multi-arch WordPress Docker images with built-in SQLite support.<br>
+> Always up-to-date multi-arch portable WordPress Docker images without MySQL requirement.<br>
 
 [![License: GPL v2](https://img.shields.io/badge/License-GPL_v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
 [![Multi-Architecture Support](https://img.shields.io/badge/arch-linux%2Famd64-green)](https://github.com/yunussandikci/docker-wordpress-sqlite/pkgs/container/wordpress-sqlite)
