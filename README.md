@@ -27,7 +27,7 @@ This repository provides always up-to-date WordPress Docker images with SQLite s
 To run the container, use the following command:
 
 ```bash
-docker run -d -p 8080:80 ghcr.io/yunussandikci/wordpress-sqlite:6.8.2-php8.4-apache
+docker run -d -p 8080:80 ghcr.io/yunussandikci/wordpress-sqlite:6.9.1-php8.5-apache
 ```
 
 This will start a WordPress instance with SQLite as the database, accessible at `http://localhost:8080`.
