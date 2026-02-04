@@ -63,6 +63,17 @@ jobs:
             fi
           done
 
+      - name: Build and push latest
+        if: ${{ steps.compare-tags.outputs.new_tags != '' }}
+        run: |
+          echo "New tags detected, so updating 'latest' tag as well..."
+          docker buildx build \
+            --platform linux/amd64,linux/arm/v7,linux/arm64/v8 \
+            --push \
+            --build-arg TAG="latest" \
+            --provenance=false \
+            -t "ghcr.io/${{ github.repository_owner }}/wordpress-sqlite:latest" .
+  
       - name: Push changes
         if: ${{ steps.compare-tags.outputs.new_tags != '' }}
         run: |
