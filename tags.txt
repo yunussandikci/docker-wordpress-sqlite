@@ -76,3 +76,16 @@
 6.9.0-php8.1-fpm-alpine
 6.9.0-php8.1-fpm
 6.9.0-php8.1-apache
+
+6.9.1-php8.5-fpm-alpine
+6.9.1-php8.5-fpm
+6.9.1-php8.5-apache
+6.9.1-php8.4-fpm-alpine
+6.9.1-php8.4-fpm
+6.9.1-php8.4-apache
+6.9.1-php8.3-fpm-alpine
+6.9.1-php8.3-fpm
+6.9.1-php8.3-apache
+6.9.1-php8.2-fpm-alpine
+6.9.1-php8.2-fpm
+6.9.1-php8.2-apache
