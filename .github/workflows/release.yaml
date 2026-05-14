@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: '0 0 * * *'
   workflow_dispatch:
+    inputs:
+      rebuild_tags:
+        description: 'Space-separated tags to rebuild (bypasses tags.txt check). Leave empty for normal cron diff.'
+        required: false
+        default: ''
 
 jobs:
   cron:
@@ -25,6 +30,7 @@ jobs:
 
       - name: Fetch WordPress Tags
         id: fetch-tags
+        if: ${{ inputs.rebuild_tags == '' }}
         run: |
           TAGS=""
           for page in {1..2}; do
@@ -39,8 +45,12 @@ jobs:
       - name: Compare Tags
         id: compare-tags
         run: |
-          touch tags.txt
-          NEW_TAGS=$(echo "${{ steps.fetch-tags.outputs.tags }}" | tr ' ' '\n' | grep -Fxvf tags.txt | tr '\n' ' ' | sed 's/ *$//')
+          if [ -n "${{ inputs.rebuild_tags }}" ]; then
+            NEW_TAGS="${{ inputs.rebuild_tags }}"
+          else
+            touch tags.txt
+            NEW_TAGS=$(echo "${{ steps.fetch-tags.outputs.tags }}" | tr ' ' '\n' | grep -Fxvf tags.txt | tr '\n' ' ' | sed 's/ *$//')
+          fi
           echo "New tags: ${NEW_TAGS}"
           echo "new_tags=${NEW_TAGS}" >> $GITHUB_OUTPUT
 
@@ -75,7 +85,7 @@ jobs:
             -t "ghcr.io/${{ github.repository_owner }}/wordpress-sqlite:latest" .
   
       - name: Push changes
-        if: ${{ steps.compare-tags.outputs.new_tags != '' }}
+        if: ${{ steps.compare-tags.outputs.new_tags != '' && inputs.rebuild_tags == '' }}
         run: |
           echo "${{ steps.compare-tags.outputs.new_tags }}" | tr ' ' '\n' >> tags.txt
           git config --global user.name "GitHub Actions"
