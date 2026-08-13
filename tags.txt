@@ -161,3 +161,15 @@
 7.0.3-php8.3-apache
 7.0.3-php8.2-fpm-alpine
 7.0.3-php8.2-apache
+7.0.4-php8.5-fpm-alpine
+7.0.4-php8.5-fpm
+7.0.4-php8.5-apache
+7.0.4-php8.4-fpm-alpine
+7.0.4-php8.4-fpm
+7.0.4-php8.4-apache
+7.0.4-php8.3-fpm-alpine
+7.0.4-php8.3-fpm
+7.0.4-php8.3-apache
+7.0.4-php8.2-fpm-alpine
+7.0.4-php8.2-fpm
+7.0.4-php8.2-apache
