@@ -1,24 +1,25 @@
 ARG TAG=apache
+
+# Prepare sqlite-database-integration natively on the build platform, so the WordPress stage only copies files (no extra packages, no emulated RUN)
+FROM --platform=$BUILDPLATFORM alpine:3.22 AS sqlite
+SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
+RUN apk add --no-cache curl unzip
+
+# Download the latest version of sqlite-database-integration
+RUN VERSION=$(curl -fsSI "https://github.com/WordPress/sqlite-database-integration/releases/latest" | grep -i '^location' | awk -F'/' '{print $NF}' | tr -d '\r\n') && \
+    curl -fsSL "https://github.com/WordPress/sqlite-database-integration/releases/download/${VERSION}/plugin-sqlite-database-integration.zip" -o /tmp/sq.zip && \
+    unzip -q /tmp/sq.zip -d /tmp && \
+    mkdir -p /wp-content/mu-plugins && \
+    mv /tmp/plugin-sqlite-database-integration /wp-content/mu-plugins/sqlite-database-integration
+
+# Configure the db.php drop-in, and load the plugin since WordPress only loads PHP files placed directly in mu-plugins
+RUN sed -e "s#{SQLITE_IMPLEMENTATION_FOLDER_PATH}#/var/www/html/wp-content/mu-plugins/sqlite-database-integration#" \
+        -e "s#{SQLITE_PLUGIN}#sqlite-database-integration/load.php#" \
+        /wp-content/mu-plugins/sqlite-database-integration/db.copy > /wp-content/db.php && \
+    printf '%s\n' '<?php' "require_once __DIR__ . '/sqlite-database-integration/load.php';" > /wp-content/mu-plugins/sqlite-database-integration.php
+
 FROM wordpress:${TAG}
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+# Any WORDPRESS_* variable makes the upstream entrypoint generate wp-config.php (with random salts) on first start, so the image runs without configuration
 ENV WORDPRESS_SOURCE_DIR="/usr/src/wordpress"
 ENV WORDPRESS_TARGET_DIR="/var/www/html"
-ENV SQLITE_DIR="${WORDPRESS_SOURCE_DIR}/wp-content/mu-plugins/sqlite-database-integration"
-
-# Install the latest version of sqlite-database-integration
-RUN if command -v apk >/dev/null 2>&1; then \
-        apk add --no-cache unzip; \
-    else \
-        apt-get update && apt-get install -y --no-install-recommends unzip && rm -rf /var/lib/apt/lists/*; \
-    fi && \
-    VERSION=$(curl -sI "https://github.com/WordPress/sqlite-database-integration/releases/latest" | grep -i '^location' | awk -F'/' '{print $NF}' | tr -d '\r\n') && \
-    curl -sL "https://github.com/WordPress/sqlite-database-integration/releases/download/${VERSION}/plugin-sqlite-database-integration.zip" -o /tmp/sq.zip && \
-    unzip -o /tmp/sq.zip -d "${WORDPRESS_SOURCE_DIR}/wp-content/mu-plugins" && \
-    mv "${WORDPRESS_SOURCE_DIR}/wp-content/mu-plugins/plugin-sqlite-database-integration" "${SQLITE_DIR}" && \
-    rm -f /tmp/sq.zip
-
-# Configure sqlite-database-integration
-RUN mv "${SQLITE_DIR}/db.copy" "${WORDPRESS_SOURCE_DIR}/wp-content/db.php" && \
-    sed -i "s#{SQLITE_IMPLEMENTATION_FOLDER_PATH}#${WORDPRESS_TARGET_DIR}/wp-content/mu-plugins/sqlite-database-integration#" "${WORDPRESS_SOURCE_DIR}/wp-content/db.php" && \
-    sed -i "s#{SQLITE_PLUGIN}#${WORDPRESS_TARGET_DIR}/wp-content/mu-plugins/sqlite-database-integration/load.php#" "${WORDPRESS_SOURCE_DIR}/wp-content/db.php" && \
-    sed -i "s#<?php#<?php\ndefine( 'WP_SQLITE_AST_DRIVER', true );#" "${WORDPRESS_SOURCE_DIR}/wp-content/db.php"
+COPY --from=sqlite --chown=www-data:www-data /wp-content/ ${WORDPRESS_SOURCE_DIR}/wp-content/

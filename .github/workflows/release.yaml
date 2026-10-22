@@ -32,67 +32,58 @@ jobs:
         id: fetch-tags
         if: ${{ inputs.rebuild_tags == '' }}
         run: |
-          TAGS=""
-          for page in {1..2}; do
-            page_tags=$(curl -s "https://registry.hub.docker.com/v2/repositories/library/wordpress/tags/?page_size=100&page=${page}" | \
-              jq -r '.results[] | select(.name | test("^[0-9]+\\.[0-9]+\\.[0-9]+-php[0-9]+\\.[0-9]+-(apache|fpm)(-.+)?$")) | "\(.name)@\(.digest)"' | tr '\n' ' ')
-            TAGS="${TAGS} ${page_tags}"
+          # Entries are "tag@digest", so upstream rebuilds of an existing tag (e.g. PHP security patches) are detected too
+          ENTRIES=""
+          for page in {1..3}; do
+            page_entries=$(curl -s "https://registry.hub.docker.com/v2/repositories/library/wordpress/tags/?page_size=100&page=${page}" | \
+              jq -r '.results[] | select(.name | test("^(cli|beta)") | not) | "\(.name)@\(.digest)"' | tr '\n' ' ')
+            ENTRIES="${ENTRIES} ${page_entries}"
             echo "Fetched tags from page ${page}"
           done
-          echo "Tags fetched: ${TAGS}"
-          echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+          echo "Tags fetched: ${ENTRIES}"
+          echo "entries=${ENTRIES}" >> $GITHUB_OUTPUT
 
       - name: Compare Tags
         id: compare-tags
         run: |
           if [ -n "${{ inputs.rebuild_tags }}" ]; then
-            NEW_TAGS="${{ inputs.rebuild_tags }}"
+            NEW_ENTRIES="${{ inputs.rebuild_tags }}"
           else
-            # Entries are "tag@digest", so upstream rebuilds of an existing tag (e.g. PHP security patches) are detected too
             touch tags.txt
-            NEW_ENTRIES=$(echo "${{ steps.fetch-tags.outputs.tags }}" | tr ' ' '\n' | grep -v '^$' | grep -Fxvf tags.txt | tr '\n' ' ' | sed 's/ *$//')
-            NEW_TAGS=$(echo "${NEW_ENTRIES}" | tr ' ' '\n' | cut -d@ -f1 | tr '\n' ' ' | sed 's/ *$//')
-            echo "new_entries=${NEW_ENTRIES}" >> $GITHUB_OUTPUT
+            NEW_ENTRIES=$(echo "${{ steps.fetch-tags.outputs.entries }}" | tr ' ' '\n' | grep -v '^$' | grep -Fxvf tags.txt | tr '\n' ' ' | sed 's/ *$//')
           fi
-          echo "New tags: ${NEW_TAGS}"
-          echo "new_tags=${NEW_TAGS}" >> $GITHUB_OUTPUT
+          echo "New tags: $(echo "${NEW_ENTRIES}" | sed 's/@[^ ]*//g')"
+          echo "new_entries=${NEW_ENTRIES}" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
-        if: ${{ steps.compare-tags.outputs.new_tags != '' }}
+        if: ${{ steps.compare-tags.outputs.new_entries != '' }}
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and push for each new tag
-        if: ${{ steps.compare-tags.outputs.new_tags != '' }}
+      - name: Build and push new tags
+        if: ${{ steps.compare-tags.outputs.new_entries != '' }}
         run: |
-          echo "${{ steps.compare-tags.outputs.new_tags }}" | tr ' ' '\n' | while read -r TAG; do
-            if [ -n "$TAG" ]; then
-              echo "Building and pushing tag: $TAG"
+          # Tags sharing a digest are upstream aliases (e.g. "php8.4-apache" and "7.1.3-php8.4-apache"), so each digest is built once, from that exact digest, and pushed under all of them
+          echo "${{ steps.compare-tags.outputs.new_entries }}" | tr ' ' '\n' | \
+            awk -F@ 'NF { if (!($NF in from)) from[$NF] = $0; tags[$NF] = tags[$NF] " " $1 } END { for (key in from) print from[key] tags[key] }' | \
+            while read -r FROM TAGS; do
+              ARGS=()
+              for TAG in ${TAGS}; do
+                ARGS+=(-t "ghcr.io/${{ github.repository_owner }}/wordpress-sqlite:${TAG}")
+              done
+              echo "Building and pushing tags: ${TAGS}"
               docker buildx build \
                 --platform linux/amd64,linux/arm/v7,linux/arm64/v8 \
                 --push \
-                --build-arg TAG="$TAG" \
+                --build-arg TAG="${FROM}" \
                 --provenance=false \
-                -t "ghcr.io/${{ github.repository_owner }}/wordpress-sqlite:$TAG" .
-            fi
-          done
+                "${ARGS[@]}" .
+            done
 
-      - name: Build and push latest
-        if: ${{ steps.compare-tags.outputs.new_tags != '' }}
-        run: |
-          echo "New tags detected, so updating 'latest' tag as well..."
-          docker buildx build \
-            --platform linux/amd64,linux/arm/v7,linux/arm64/v8 \
-            --push \
-            --build-arg TAG="latest" \
-            --provenance=false \
-            -t "ghcr.io/${{ github.repository_owner }}/wordpress-sqlite:latest" .
-  
       - name: Push changes
-        if: ${{ steps.compare-tags.outputs.new_tags != '' && inputs.rebuild_tags == '' }}
+        if: ${{ steps.compare-tags.outputs.new_entries != '' && inputs.rebuild_tags == '' }}
         run: |
           echo "${{ steps.compare-tags.outputs.new_entries }}" | tr ' ' '\n' | while read -r ENTRY; do
-            TAG="${ENTRY%%@*}"
-            grep -v -e "^${TAG}\$" -e "^${TAG}@" tags.txt > tags.tmp || true
+            awk -F@ -v tag="${ENTRY%%@*}" 'NF && $1 != tag' tags.txt > tags.tmp
             echo "${ENTRY}" >> tags.tmp
             mv tags.tmp tags.txt
           done

@@ -20,7 +20,7 @@ This repository provides always up-to-date WordPress Docker images with SQLite s
 ## ✨ Features 
 
 - **SQLite Integration**: WordPress is pre-configured to use SQLite as the database, thanks to the [SQLite Database Integration Plugin](https://github.com/WordPress/sqlite-database-integration). No extra setup required!
-- **Automated Builds**: Docker images are automatically built and pushed to the GitHub Container Registry (`ghcr.io`) whenever new WordPress tags are released.
+- **Automated Builds**: Docker images are automatically built and pushed to the GitHub Container Registry (`ghcr.io`) whenever the official WordPress images are released or rebuilt (e.g. for PHP security fixes).
 - **Multi-Architecture Support**: Images are built for multiple architectures ensuring compatibility across a wide range of systems.
   - `linux/amd64`, `linux/arm/v7`, `linux/arm64/v8` 
 - **Minimalistic**: Only WordPress and the SQLite plugin are included—nothing extra. Lightweight and efficient!
@@ -29,7 +29,7 @@ This repository provides always up-to-date WordPress Docker images with SQLite s
 To run the container, use the following command:
 
 ```bash
-docker run -d -p 8080:80 ghcr.io/yunussandikci/wordpress-sqlite:6.9.1-php8.5-apache
+docker run -d -p 8080:80 ghcr.io/yunussandikci/wordpress-sqlite:php8.5-apache
 ```
 
 This will start a WordPress instance with SQLite as the database, accessible at `http://localhost:8080`.
@@ -37,6 +37,8 @@ This will start a WordPress instance with SQLite as the database, accessible at 
 ## 🏷️ Available Tags
 
 The available tags correspond to the official WordPress Docker tags. You can find the list of supported tags in the [tags.txt](tags.txt) file.
+
+Floating tags such as `php8.5-apache`, `7.1-fpm` or `fpm-alpine` always point to the latest WordPress release with the latest PHP security fixes. Exact tags such as `7.1.3-php8.5-apache` stop receiving PHP fixes once a newer WordPress version is released, so prefer floating tags unless you update the tag yourself.
 
 ## 🤝 Contributing 
 
