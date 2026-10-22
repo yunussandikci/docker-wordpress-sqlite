@@ -35,7 +35,7 @@ jobs:
           TAGS=""
           for page in {1..2}; do
             page_tags=$(curl -s "https://registry.hub.docker.com/v2/repositories/library/wordpress/tags/?page_size=100&page=${page}" | \
-              jq -r '.results[] | select(.name | test("^[0-9]+\\.[0-9]+\\.[0-9]+-php[0-9]+\\.[0-9]+-(apache|fpm)(-.+)?$")) | .name' | tr '\n' ' ')
+              jq -r '.results[] | select(.name | test("^[0-9]+\\.[0-9]+\\.[0-9]+-php[0-9]+\\.[0-9]+-(apache|fpm)(-.+)?$")) | "\(.name)@\(.digest)"' | tr '\n' ' ')
             TAGS="${TAGS} ${page_tags}"
             echo "Fetched tags from page ${page}"
           done
@@ -48,8 +48,11 @@ jobs:
           if [ -n "${{ inputs.rebuild_tags }}" ]; then
             NEW_TAGS="${{ inputs.rebuild_tags }}"
           else
+            # Entries are "tag@digest", so upstream rebuilds of an existing tag (e.g. PHP security patches) are detected too
             touch tags.txt
-            NEW_TAGS=$(echo "${{ steps.fetch-tags.outputs.tags }}" | tr ' ' '\n' | grep -Fxvf tags.txt | tr '\n' ' ' | sed 's/ *$//')
+            NEW_ENTRIES=$(echo "${{ steps.fetch-tags.outputs.tags }}" | tr ' ' '\n' | grep -v '^$' | grep -Fxvf tags.txt | tr '\n' ' ' | sed 's/ *$//')
+            NEW_TAGS=$(echo "${NEW_ENTRIES}" | tr ' ' '\n' | cut -d@ -f1 | tr '\n' ' ' | sed 's/ *$//')
+            echo "new_entries=${NEW_ENTRIES}" >> $GITHUB_OUTPUT
           fi
           echo "New tags: ${NEW_TAGS}"
           echo "new_tags=${NEW_TAGS}" >> $GITHUB_OUTPUT
@@ -87,7 +90,12 @@ jobs:
       - name: Push changes
         if: ${{ steps.compare-tags.outputs.new_tags != '' && inputs.rebuild_tags == '' }}
         run: |
-          echo "${{ steps.compare-tags.outputs.new_tags }}" | tr ' ' '\n' >> tags.txt
+          echo "${{ steps.compare-tags.outputs.new_entries }}" | tr ' ' '\n' | while read -r ENTRY; do
+            TAG="${ENTRY%%@*}"
+            grep -v -e "^${TAG}\$" -e "^${TAG}@" tags.txt > tags.tmp || true
+            echo "${ENTRY}" >> tags.tmp
+            mv tags.tmp tags.txt
+          done
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           git add tags.txt
