@@ -70,9 +70,15 @@ jobs:
               for TAG in ${TAGS}; do
                 ARGS+=(-t "ghcr.io/${{ github.repository_owner }}/wordpress-sqlite:${TAG}")
               done
-              echo "Building and pushing tags: ${TAGS}"
+              MANIFEST=$(docker buildx imagetools inspect --raw "wordpress:${FROM}")
+              PLATFORMS=$(jq -r '[.manifests[].platform | "\(.os)/\(.architecture)" + (if .variant then "/\(.variant)" elif .architecture == "arm64" then "/v8" else "" end)] | map(select(IN("linux/amd64", "linux/arm/v7", "linux/arm64/v8"))) | unique | join(",")' <<< "${MANIFEST}")
+              if [ -z "${PLATFORMS}" ]; then
+                echo "Skipping tags: ${TAGS} (no supported platform in the base image)"
+                continue
+              fi
+              echo "Building and pushing tags: ${TAGS} for ${PLATFORMS}"
               docker buildx build \
-                --platform linux/amd64,linux/arm/v7,linux/arm64/v8 \
+                --platform "${PLATFORMS}" \
                 --push \
                 --build-arg TAG="${FROM}" \
                 --provenance=false \
